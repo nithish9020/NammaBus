@@ -1,0 +1,119 @@
+########################################
+# General
+########################################
+.DS_Store
+Thumbs.db
+*.log
+logs
+*.tmp
+*.temp
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.env
+.env.*
+!.env.example
+
+########################################
+# Node / Express Backend
+########################################
+node_modules/
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
+
+########################################
+# Bun
+########################################
+.bun/
+bun.lockb
+bun.lockb.*
+.bunfig.toml.local
+
+########################################
+# React (Vite / CRA)
+########################################
+# Vite
+.vite/
+dist/
+
+# CRA
+build/
+
+# Cache
+.cache/
+.eslintcache
+
+########################################
+# React Native (CLI + Expo)
+########################################
+# Metro
+.expo/
+.expo-shared/
+.web-build/
+metro-cache/
+
+# React Native CLI
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.cxx/
+android/.idea/
+android/build/
+
+ios/build/
+ios/Pods/
+ios/DerivedData/
+*.xcworkspace
+
+# React Native Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+########################################
+# Firebase
+########################################
+.firebase/
+.firebaserc.local
+
+########################################
+# AWS / Cloud
+########################################
+.aws/
+.aws-sam/
+
+########################################
+# Testing
+########################################
+coverage/
+jest-cache/
+*.lcov
+
+########################################
+# Database
+########################################
+*.sqlite
+*.db
+*.db-journal
+
+########################################
+# TypeScript
+########################################
+*.tsbuildinfo
+
+########################################
+# Misc
+########################################
+*.pem
+*.key
