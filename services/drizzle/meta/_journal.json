@@ -8,6 +8,13 @@
       "when": 1772001683090,
       "tag": "0000_woozy_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772013718626,
+      "tag": "0001_groovy_hobgoblin",
+      "breakpoints": true
     }
   ]
 }
