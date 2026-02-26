@@ -7,8 +7,9 @@
     "strict": false,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node"]
   },
-  "include": ["src/**/*", "identity/**/*", "mobility/**/*", "realtime/**/*", "prediction/**/*"],
+  "include": ["src/**/*", "identity/**/*", "mobility/**/*", "realtime/**/*", "prediction/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }
