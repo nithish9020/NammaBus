@@ -1,0 +1,23 @@
+# Render Blueprint — Infrastructure as Code
+# Render reads this file to auto-configure services.
+# Docs: https://docs.render.com/blueprint-spec
+
+services:
+  - type: web
+    name: nammabus-api
+    runtime: docker
+    region: singapore # Closest to Indian tier-2 cities
+    plan: free # Free tier (750 hrs/month)
+    dockerfilePath: ./services/Dockerfile
+    dockerContext: ./services
+    branch: main
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEON_DATABASE_URL
+        sync: false # Set manually in Render dashboard (sensitive)
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      - key: BETTER_AUTH_URL
+        sync: false

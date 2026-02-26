@@ -1,0 +1,57 @@
+# ──────────────────────────────────────────────────────────────
+# NammaBus — Deploy to Render on merge to main
+# ──────────────────────────────────────────────────────────────
+#
+# Flow:
+#   PR merged into `main`
+#     → Run DB migrations (Neon HTTP, no VPC needed)
+#     → Trigger Render redeploy via Deploy Hook (simple curl)
+#
+# We disable Render's auto-deploy so that GitHub Actions controls
+# the order: migrations first, then deploy.
+# ──────────────────────────────────────────────────────────────
+
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/**" # Only trigger when backend code changes
+
+jobs:
+  migrate-and-deploy:
+    name: Migrate DB → Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout code ──────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Setup Bun ──────────────────────────────────────
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # ── 3. Install dependencies ───────────────────────────
+      - name: Install dependencies
+        working-directory: services
+        run: bun install --frozen-lockfile
+
+      # ── 4. Run DB Migrations ──────────────────────────────
+      # Runs BEFORE deploy so the new schema is ready
+      # when the new container starts.
+      # Uses Neon HTTP driver — no VPC/tunnel needed.
+      - name: Run DB migrations
+        working-directory: services
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: bun run db:migrate
+
+      # ── 5. Trigger Render Deploy ──────────────────────────
+      # Render provides a Deploy Hook URL — just curl it.
+      # No CLI, no API key, no auth — the URL itself is the secret.
+      - name: Trigger Render deploy
+        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
