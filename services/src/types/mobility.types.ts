@@ -57,3 +57,74 @@ export interface UpdateRouteInput {
   city?: string;
   status?: RouteStatus;
 }
+
+// ─── Bus ───────────────────────────────────────────────────
+
+export type BusType = "mini" | "regular" | "ac" | "deluxe";
+export type BusStatus = "active" | "inactive" | "maintenance";
+
+export interface Bus {
+  id: string;
+  registrationNumber: string;
+  type: BusType;
+  capacity: number;
+  city: string;
+  status: BusStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateBusInput {
+  registrationNumber: string;
+  type?: BusType;
+  capacity: number;
+  city: string;
+}
+
+export interface UpdateBusInput {
+  type?: BusType;
+  capacity?: number;
+  city?: string;
+  status?: BusStatus;
+}
+
+// ─── Trip ──────────────────────────────────────────────────
+
+export type TripStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
+
+export interface Trip {
+  id: string;
+  busId: string;
+  routeId: string;
+  driverId: string;
+  conductorId: string | null;
+  status: TripStatus;
+  startedAt: Date | null;
+  endedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateTripInput {
+  busId: string;
+  routeId: string;
+  driverId: string;
+  conductorId?: string;
+}
+
+export interface UpdateTripInput {
+  status?: TripStatus;
+  conductorId?: string;
+}
+
+// ─── Trip Location (GPS pings for ETA) ─────────────────────
+
+export interface TripLocation {
+  id: string;
+  tripId: string;
+  lat: string;
+  lon: string;
+  speed: string | null;
+  heading: string | null;
+  recordedAt: Date;
+}
