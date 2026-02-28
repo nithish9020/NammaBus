@@ -195,6 +195,9 @@ async function testUnauthorized() {
   const routes = await request("GET", "/api/mobility/routes");
   assert("Routes without auth → 401", routes.status === 401);
 
+  const buses = await request("GET", "/api/mobility/buses");
+  assert("Buses without auth → 401", buses.status === 401);
+
   cookie = savedCookie;
 }
 
@@ -272,6 +275,58 @@ async function testRoutes() {
   await request("DELETE", `/api/mobility/stops/${stopId3}`);
 }
 
+async function testBuses() {
+  console.log("\n🚌 Buses CRUD");
+
+  // Create
+  const create = await request("POST", "/api/mobility/buses", {
+    registrationNumber: `TN-43-N-${Date.now()}`,
+    type: "ac",
+    capacity: 40,
+    city: "Coimbatore",
+  });
+  assert("Create bus", create.status === 201, `status=${create.status} ${JSON.stringify(create.data)}`);
+  const busId = create.data?.bus?.id;
+  assert("Bus has correct type", create.data?.bus?.type === "ac");
+  assert("Bus has correct capacity", create.data?.bus?.capacity === 40);
+
+  // Create with defaults (type=regular, status=active)
+  const create2 = await request("POST", "/api/mobility/buses", {
+    registrationNumber: `TN-43-N-${Date.now() + 1}`,
+    capacity: 55,
+    city: "Coimbatore",
+  });
+  assert("Create bus with defaults", create2.status === 201 && create2.data?.bus?.type === "regular");
+  const busId2 = create2.data?.bus?.id;
+
+  // List
+  const list = await request("GET", "/api/mobility/buses");
+  assert("List buses", list.status === 200 && Array.isArray(list.data?.buses));
+
+  // Get by ID
+  const get = await request("GET", `/api/mobility/buses/${busId}`);
+  assert("Get bus by ID", get.status === 200 && get.data?.bus?.city === "Coimbatore");
+
+  // Update (PATCH)
+  const update = await request("PATCH", `/api/mobility/buses/${busId}`, {
+    capacity: 45,
+    status: "maintenance",
+  });
+  assert("Update bus", update.status === 200 && update.data?.bus?.capacity === 45);
+  assert("Bus status updated", update.data?.bus?.status === "maintenance");
+
+  // Delete
+  const del = await request("DELETE", `/api/mobility/buses/${busId}`);
+  assert("Delete bus", del.status === 204);
+
+  // Verify deleted
+  const verify = await request("GET", `/api/mobility/buses/${busId}`);
+  assert("Verify bus deleted", verify.status === 404);
+
+  // Cleanup
+  await request("DELETE", `/api/mobility/buses/${busId2}`);
+}
+
 async function testSignOut() {
   console.log("\n👋 Sign Out");
 
@@ -292,6 +347,7 @@ async function run() {
   await testDrivers();
   await testConductors();
   await testRoutes();
+  await testBuses();
   await testUnauthorized();
   await testSignOut();
 
