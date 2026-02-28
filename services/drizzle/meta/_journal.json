@@ -29,6 +29,13 @@
       "when": 1772260991465,
       "tag": "0003_modern_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772270942867,
+      "tag": "0004_rich_chronomancer",
+      "breakpoints": true
     }
   ]
 }
