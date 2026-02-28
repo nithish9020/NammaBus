@@ -9,7 +9,7 @@
     "db:migrate": "bun run src/db/migrate.ts",
     "db:seed": "bun run src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "test:api": "bun run tests/api.test.ts"
+    "test:api": "bun run tests/run.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
