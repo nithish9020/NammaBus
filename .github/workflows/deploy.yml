@@ -68,6 +68,8 @@ jobs:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           BETTER_AUTH_URL: http://localhost:3000
+          BASE_URL: http://localhost:3000
+          REDIS_URL: ${{ secrets.REDIS_URL }}
         run: bun run start &
 
       - name: Wait for server
@@ -79,4 +81,6 @@ jobs:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           BETTER_AUTH_URL: http://localhost:3000
+          BASE_URL: http://localhost:3000
+          REDIS_URL: ${{ secrets.REDIS_URL }}
         run: bun run test:api
