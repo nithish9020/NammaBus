@@ -24,7 +24,7 @@ COPY prediction ./prediction
 COPY drizzle ./drizzle
 
 # Render injects PORT at runtime (default 10000)
-# Do NOT hardcode — let Render decide
+# HTTP + WebSocket both run on the SAME port via ws library
 ENV NODE_ENV=production
 EXPOSE 10000
 
