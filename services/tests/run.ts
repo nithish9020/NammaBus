@@ -7,6 +7,7 @@ import { testDrivers } from "./drivers.test";
 import { testConductors } from "./conductors.test";
 import { testTrips } from "./trips.test";
 import { testTripLocations } from "./tripLocations.test";
+import { testRealtime } from "./realtime.test";
 import { testUnauthorized } from "./unauthorized.test";
 
 async function run() {
@@ -20,6 +21,7 @@ async function run() {
   await testBuses();
   await testTrips();
   await testTripLocations();
+  await testRealtime();
   await testUnauthorized();
   await testSignOut();
 
