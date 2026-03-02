@@ -20,6 +20,7 @@ logs
 # Node / Express Backend
 ########################################
 node_modules/
+docs/
 dist/
 build/
 coverage/

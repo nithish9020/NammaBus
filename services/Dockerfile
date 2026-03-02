@@ -25,6 +25,14 @@ COPY drizzle ./drizzle
 
 # Render injects PORT at runtime (default 10000)
 # Do NOT hardcode — let Render decide
+#
+# NOTE: WebSocket currently runs on PORT+1 (e.g. 10001).
+# Render free tier only exposes 1 port, so WebSocket won't work on Render.
+# Options for production:
+#   1. Upgrade to Render paid plan (supports multiple ports)
+#   2. Move to a host that supports multiple ports (Railway, Fly.io)
+#   3. Use a reverse proxy to route /ws to PORT+1
+# For now, HTTP API works on Render. WebSocket is for local dev / future host.
 ENV NODE_ENV=production
 EXPOSE 10000
 
