@@ -1,4 +1,4 @@
-import type { ServerWebSocket } from "bun";
+import type WebSocket from "ws";
 
 /**
  * In-memory pub/sub room manager for realtime bus tracking.
@@ -13,44 +13,49 @@ import type { ServerWebSocket } from "bun";
  *   A trip ties together bus + route + driver + time window.
  *   Trip = the single live journey a passenger is tracking.
  *
- * Structure: Map<tripId, Set<WebSocket>>
- * - Map  → O(1) lookup by trip
- * - Set  → O(1) add/remove, prevents duplicates
+ * Structure:
+ *   rooms           → Map<tripId, Set<WebSocket>>
+ *   clientTrips     → Map<WebSocket, Set<tripId>>  (reverse lookup for cleanup)
  */
 
-export type WSData = {
-  subscribedTrips: Set<string>;
-};
-
-const rooms = new Map<string, Set<ServerWebSocket<WSData>>>();
+const rooms = new Map<string, Set<WebSocket>>();
+const clientTrips = new Map<WebSocket, Set<string>>();
 
 export const roomManager = {
-  subscribe(tripId: string, ws: ServerWebSocket<WSData>) {
+  subscribe(tripId: string, ws: WebSocket) {
     if (!rooms.has(tripId)) rooms.set(tripId, new Set());
     rooms.get(tripId)!.add(ws);
-    ws.data.subscribedTrips.add(tripId);
+
+    if (!clientTrips.has(ws)) clientTrips.set(ws, new Set());
+    clientTrips.get(ws)!.add(tripId);
+
     console.log(`[ws] +subscribe trip:${tripId.slice(0, 8)}… (${rooms.get(tripId)!.size} watchers)`);
   },
 
-  unsubscribe(tripId: string, ws: ServerWebSocket<WSData>) {
+  unsubscribe(tripId: string, ws: WebSocket) {
     const room = rooms.get(tripId);
     if (!room) return;
     room.delete(ws);
-    ws.data.subscribedTrips.delete(tripId);
     if (room.size === 0) rooms.delete(tripId);
+
+    clientTrips.get(ws)?.delete(tripId);
+
     console.log(`[ws] -unsubscribe trip:${tripId.slice(0, 8)}…`);
   },
 
   /** Remove a ws from ALL rooms (called on disconnect) */
-  removeAll(ws: ServerWebSocket<WSData>) {
-    for (const tripId of ws.data.subscribedTrips) {
+  removeAll(ws: WebSocket) {
+    const trips = clientTrips.get(ws);
+    if (!trips) return;
+
+    for (const tripId of trips) {
       const room = rooms.get(tripId);
       if (room) {
         room.delete(ws);
         if (room.size === 0) rooms.delete(tripId);
       }
     }
-    ws.data.subscribedTrips.clear();
+    clientTrips.delete(ws);
   },
 
   /** Push data to every WebSocket in a trip's room */
@@ -58,7 +63,9 @@ export const roomManager = {
     const room = rooms.get(tripId);
     if (!room || room.size === 0) return;
     const message = JSON.stringify(data);
-    for (const ws of room) ws.send(message);
+    for (const ws of room) {
+      if (ws.readyState === ws.OPEN) ws.send(message);
+    }
     console.log(`[ws] broadcast trip:${tripId.slice(0, 8)}… → ${room.size} watchers`);
   },
 

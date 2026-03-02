@@ -1,5 +1,7 @@
-import { roomManager, type WSData } from "./roomManager";
-import type { ServerWebSocket } from "bun";
+import type WebSocket from "ws";
+import { WebSocketServer } from "ws";
+import type { Server } from "http";
+import { roomManager } from "./roomManager";
 
 /**
  * WebSocket message protocol:
@@ -17,51 +19,60 @@ import type { ServerWebSocket } from "bun";
  *   { "type": "error", "message": "..." }
  */
 
-export const websocketHandler = {
-  open(ws: ServerWebSocket<WSData>) {
+/**
+ * Attach WebSocket server to an existing HTTP server.
+ * Upgrades connections at the /ws path.
+ * Both HTTP (Express) and WebSocket share the SAME port.
+ */
+export function attachWebSocket(httpServer: Server) {
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+
+  wss.on("connection", (ws: WebSocket) => {
     console.log("[ws] new connection");
-  },
 
-  message(ws: ServerWebSocket<WSData>, raw: string | Buffer) {
-    let msg: any;
-    try {
-      msg = JSON.parse(typeof raw === "string" ? raw : raw.toString());
-    } catch {
-      ws.send(JSON.stringify({ type: "error", message: "Invalid JSON" }));
-      return;
-    }
+    ws.on("message", (raw: Buffer | string) => {
+      let msg: any;
+      try {
+        msg = JSON.parse(typeof raw === "string" ? raw : raw.toString());
+      } catch {
+        ws.send(JSON.stringify({ type: "error", message: "Invalid JSON" }));
+        return;
+      }
 
-    switch (msg.type) {
-      case "subscribe": {
-        if (!msg.tripId) {
-          ws.send(JSON.stringify({ type: "error", message: "tripId is required" }));
-          return;
+      switch (msg.type) {
+        case "subscribe": {
+          if (!msg.tripId) {
+            ws.send(JSON.stringify({ type: "error", message: "tripId is required" }));
+            return;
+          }
+          roomManager.subscribe(msg.tripId, ws);
+          ws.send(JSON.stringify({ type: "subscribed", tripId: msg.tripId }));
+          break;
         }
-        roomManager.subscribe(msg.tripId, ws);
-        ws.send(JSON.stringify({ type: "subscribed", tripId: msg.tripId }));
-        break;
-      }
-      case "unsubscribe": {
-        if (!msg.tripId) {
-          ws.send(JSON.stringify({ type: "error", message: "tripId is required" }));
-          return;
+        case "unsubscribe": {
+          if (!msg.tripId) {
+            ws.send(JSON.stringify({ type: "error", message: "tripId is required" }));
+            return;
+          }
+          roomManager.unsubscribe(msg.tripId, ws);
+          ws.send(JSON.stringify({ type: "unsubscribed", tripId: msg.tripId }));
+          break;
         }
-        roomManager.unsubscribe(msg.tripId, ws);
-        ws.send(JSON.stringify({ type: "unsubscribed", tripId: msg.tripId }));
-        break;
+        case "ping": {
+          ws.send(JSON.stringify({ type: "pong" }));
+          break;
+        }
+        default: {
+          ws.send(JSON.stringify({ type: "error", message: `Unknown type: "${msg.type}"` }));
+        }
       }
-      case "ping": {
-        ws.send(JSON.stringify({ type: "pong" }));
-        break;
-      }
-      default: {
-        ws.send(JSON.stringify({ type: "error", message: `Unknown type: "${msg.type}"` }));
-      }
-    }
-  },
+    });
 
-  close(ws: ServerWebSocket<WSData>) {
-    roomManager.removeAll(ws);
-    console.log("[ws] connection closed");
-  },
-};
+    ws.on("close", () => {
+      roomManager.removeAll(ws);
+      console.log("[ws] connection closed");
+    });
+  });
+
+  return wss;
+}
