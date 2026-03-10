@@ -2,6 +2,7 @@ import type WebSocket from "ws";
 import { WebSocketServer } from "ws";
 import type { Server } from "http";
 import { roomManager } from "./roomManager";
+import { publisher } from "../src/lib/redis";
 
 /**
  * WebSocket message protocol:
@@ -47,6 +48,16 @@ export function attachWebSocket(httpServer: Server) {
           }
           roomManager.subscribe(msg.tripId, ws);
           ws.send(JSON.stringify({ type: "subscribed", tripId: msg.tripId }));
+
+          // Send the latest known position immediately so the passenger
+          // doesn't stare at a blank map until the next GPS ping arrives.
+          publisher.get(`trip:${msg.tripId}:latest`)
+            .then((cached) => {
+              if (cached && ws.readyState === ws.OPEN) {
+                ws.send(cached); // already a JSON string
+              }
+            })
+            .catch((err) => console.error("[ws] failed to fetch latest:", err.message));
           break;
         }
         case "unsubscribe": {

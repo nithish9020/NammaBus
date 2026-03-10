@@ -171,7 +171,45 @@ export async function testRealtime() {
     assert("Redis publish → WS broadcast", false, err.message);
   }
 
-  // ─── 8. Second client on same trip ──────────────────────
+  // ─── 8. Subscribe sends cached latest position ──────────
+  // If a driver has been posting GPS, a new subscriber should
+  // immediately receive the last known position from Redis.
+  try {
+    const cachedTrip = "00000000-0000-0000-0000-000000000099";
+    const cachedPayload = {
+      type: "bus:location",
+      tripId: cachedTrip,
+      busId: "bus-cached-001",
+      lat: "12.3456",
+      lon: "77.6543",
+      speed: "40.00",
+      heading: "180.00",
+      recordedAt: new Date().toISOString(),
+    };
+
+    // Pre-set the latest position in Redis
+    await redisPub!.set(`trip:${cachedTrip}:latest`, JSON.stringify(cachedPayload));
+
+    // Open a fresh client and subscribe — should get subscribed ack + latest
+    const ws3 = await openWs();
+    const ack = await sendAndReceive(ws3, { type: "subscribe", tripId: cachedTrip });
+    assert("Cached latest → subscribe ack", ack.type === "subscribed" && ack.tripId === cachedTrip);
+
+    const latest = await waitForMessage(ws3, 3000);
+    assert(
+      "Cached latest → sent on subscribe",
+      latest.type === "bus:location" && latest.tripId === cachedTrip && latest.lat === "12.3456",
+      `received: ${JSON.stringify(latest)}`
+    );
+
+    // Cleanup
+    await redisPub!.del(`trip:${cachedTrip}:latest`);
+    await closeWs(ws3);
+  } catch (err: any) {
+    assert("Cached latest → sent on subscribe", false, err.message);
+  }
+
+  // ─── 9. Second client on same trip ──────────────────────
   let ws2: WebSocket | null = null;
   try {
     ws2 = await openWs();
@@ -201,7 +239,7 @@ export async function testRealtime() {
     assert("Broadcast reaches both clients", false, err.message);
   }
 
-  // ─── 9. Unsubscribe → no more broadcasts ───────────────
+  // ─── 10. Unsubscribe → no more broadcasts ──────────────
   try {
     const unsub = await sendAndReceive(ws1, { type: "unsubscribe", tripId: fakeTripId });
     assert("Unsubscribe → ack", unsub.type === "unsubscribed" && unsub.tripId === fakeTripId);
@@ -231,7 +269,7 @@ export async function testRealtime() {
     assert("Unsubscribed client gets no broadcast", false, err.message);
   }
 
-  // ─── 10. /api/realtime/stats endpoint ───────────────────
+  // ─── 11. /api/realtime/stats endpoint ──────────────────
   try {
     const stats = await request("GET", "/api/realtime/stats");
     assert(
@@ -243,7 +281,7 @@ export async function testRealtime() {
     assert("GET /api/realtime/stats", false, err.message);
   }
 
-  // ─── 11. End-to-end: HTTP GPS POST → WS broadcast ──────
+  // ─── 12. End-to-end: HTTP GPS POST → WS broadcast ─────
   // Create a real trip, POST locations via HTTP, verify WS client receives broadcast
   let locBusId: string | null = null;
   let locStopA: string | null = null;
@@ -306,6 +344,47 @@ export async function testRealtime() {
     );
   } catch (err: any) {
     assert("E2E: GPS POST → Redis → WS broadcast", false, err.message);
+  }
+
+  // ─── 13. Trip end cleanup ──────────────────────────────
+  // When a trip is completed, subscribers should receive { type: "trip:ended" }
+  // and the Redis trip:<id>:latest key should be deleted.
+  try {
+    if (!locTripId) throw new Error("No trip from E2E test to complete");
+
+    // ws2 is already subscribed to locTripId from the E2E test above.
+    // Start the trip first (scheduled → in_progress)
+    await request("PATCH", `/api/mobility/trips/${locTripId}`, { status: "in_progress" });
+
+    // Post a GPS location so Redis trip:<id>:latest exists
+    await request("POST", `/api/mobility/trips/${locTripId}/locations`, {
+      locations: [{ lat: "11.0010", lon: "76.9550", speed: "30.00", heading: "90.00" }],
+    });
+
+    // Drain the bus:location broadcast from the GPS post above
+    await drainMessages(ws2!, 500);
+
+    // Verify Redis key exists before completing
+    const before = await redisPub!.get(`trip:${locTripId}:latest`);
+    assert("Trip end: Redis latest exists before", !!before);
+
+    // Complete the trip → should trigger trip:ended broadcast + Redis DEL
+    const endedPromise = waitForMessage(ws2!, 5000);
+    await request("PATCH", `/api/mobility/trips/${locTripId}`, { status: "completed" });
+
+    const ended = await endedPromise;
+    assert(
+      "Trip end: trip:ended broadcast",
+      ended.type === "trip:ended" && ended.tripId === locTripId,
+      `received: ${JSON.stringify(ended)}`
+    );
+
+    // Give Redis DEL a moment to complete (fire-and-forget)
+    await sleep(300);
+    const after = await redisPub!.get(`trip:${locTripId}:latest`);
+    assert("Trip end: Redis latest deleted", after === null, `still exists: ${after}`);
+  } catch (err: any) {
+    assert("Trip end: trip:ended broadcast", false, err.message);
   }
 
   // ─── Cleanup ────────────────────────────────────────────
