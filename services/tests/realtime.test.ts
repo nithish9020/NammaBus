@@ -6,12 +6,34 @@ import { env } from "../src/lib/env";
 // ─── Helpers ───────────────────────────────────────────────
 const WS_URL = BASE_URL.replace(/^http/, "ws") + "/ws";
 
-/** Open a WebSocket and wait for the connection to be ready */
+/** Open an authenticated WebSocket (passes session cookie) */
 function openWs(): Promise<WebSocket> {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(WS_URL);
+    const ws = new WebSocket(WS_URL, { headers: { Cookie: cookie } });
     ws.on("open", () => resolve(ws));
     ws.on("error", reject);
+  });
+}
+
+/** Open a raw WebSocket WITHOUT auth (for rejection tests) */
+function openWsNoAuth(): Promise<{ rejected: boolean; code?: number }> {
+  return new Promise((resolve) => {
+    const ws = new WebSocket(WS_URL);
+    const timeout = setTimeout(() => resolve({ rejected: false }), 5000);
+    // Bun fires close with code 1002 for rejected upgrades
+    // Node fires unexpected-response with HTTP status
+    ws.on("close", (code) => {
+      clearTimeout(timeout);
+      resolve({ rejected: true, code });
+    });
+    ws.on("open", () => {
+      clearTimeout(timeout);
+      ws.close();
+      resolve({ rejected: false });
+    });
+    ws.on("error", () => {
+      // error fires alongside close, ignore it
+    });
   });
 }
 
@@ -79,17 +101,25 @@ function sleep(ms: number) {
 export async function testRealtime() {
   console.log("\n🔴 Realtime (WebSocket + Redis)");
 
-  // ─── 1. WebSocket connect ───────────────────────────────
+  // ─── 1. Unauthenticated WS → rejected ──────────────────
+  try {
+    const { rejected, code } = await openWsNoAuth();
+    assert("WS without auth → rejected", rejected === true, `rejected=${rejected} code=${code}`);
+  } catch (err: any) {
+    assert("WS without auth → rejected", false, err.message);
+  }
+
+  // ─── 2. Authenticated WS connect ───────────────────────
   let ws1: WebSocket | null = null;
   try {
     ws1 = await openWs();
-    assert("WS connect", ws1.readyState === WebSocket.OPEN);
+    assert("WS connect (with cookie)", ws1.readyState === WebSocket.OPEN);
   } catch (err: any) {
-    assert("WS connect", false, err.message);
+    assert("WS connect (with cookie)", false, err.message);
     return; // can't continue without a connection
   }
 
-  // ─── 2. Ping / Pong ────────────────────────────────────
+  // ─── 3. Ping / Pong ────────────────────────────────────
   try {
     const pong = await sendAndReceive(ws1, { type: "ping" });
     assert("Ping → Pong", pong.type === "pong");
@@ -97,7 +127,7 @@ export async function testRealtime() {
     assert("Ping → Pong", false, err.message);
   }
 
-  // ─── 3. Subscribe to a trip ─────────────────────────────
+  // ─── 4. Subscribe to a trip ─────────────────────────────
   const fakeTripId = "00000000-0000-0000-0000-000000000001";
   await drainMessages(ws1);
   try {
@@ -107,7 +137,7 @@ export async function testRealtime() {
     assert("Subscribe → ack", false, err.message);
   }
 
-  // ─── 4. Subscribe without tripId → error ────────────────
+  // ─── 5. Subscribe without tripId → error ────────────────
   try {
     const errMsg = await sendAndReceive(ws1, { type: "subscribe" });
     assert("Subscribe no tripId → error", errMsg.type === "error" && errMsg.message.includes("tripId"));
@@ -115,7 +145,7 @@ export async function testRealtime() {
     assert("Subscribe no tripId → error", false, err.message);
   }
 
-  // ─── 5. Unknown message type → error ────────────────────
+  // ─── 6. Unknown message type → error ────────────────────
   try {
     const errMsg = await sendAndReceive(ws1, { type: "foobar" });
     assert("Unknown type → error", errMsg.type === "error" && errMsg.message.includes("foobar"));
@@ -123,7 +153,7 @@ export async function testRealtime() {
     assert("Unknown type → error", false, err.message);
   }
 
-  // ─── 6. Invalid JSON → error ────────────────────────────
+  // ─── 7. Invalid JSON → error ────────────────────────────
   try {
     const reply = await new Promise<any>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error("timeout")), 5000);
@@ -138,7 +168,7 @@ export async function testRealtime() {
     assert("Invalid JSON → error", false, err.message);
   }
 
-  // ─── 7. Redis pub/sub → WebSocket broadcast ─────────────
+  // ─── 8. Redis pub/sub → WebSocket broadcast ─────────────
   // Publish a GPS payload directly to Redis on trip channel,
   // and verify the subscribed WebSocket client receives it.
   let redisPub: Redis | null = null;
@@ -171,7 +201,7 @@ export async function testRealtime() {
     assert("Redis publish → WS broadcast", false, err.message);
   }
 
-  // ─── 8. Subscribe sends cached latest position ──────────
+  // ─── 9. Subscribe sends cached latest position ──────────
   // If a driver has been posting GPS, a new subscriber should
   // immediately receive the last known position from Redis.
   try {
@@ -209,7 +239,7 @@ export async function testRealtime() {
     assert("Cached latest → sent on subscribe", false, err.message);
   }
 
-  // ─── 9. Second client on same trip ──────────────────────
+  // ─── 10. Second client on same trip ─────────────────────
   let ws2: WebSocket | null = null;
   try {
     ws2 = await openWs();
@@ -239,7 +269,7 @@ export async function testRealtime() {
     assert("Broadcast reaches both clients", false, err.message);
   }
 
-  // ─── 10. Unsubscribe → no more broadcasts ──────────────
+  // ─── 11. Unsubscribe → no more broadcasts ──────────────
   try {
     const unsub = await sendAndReceive(ws1, { type: "unsubscribe", tripId: fakeTripId });
     assert("Unsubscribe → ack", unsub.type === "unsubscribed" && unsub.tripId === fakeTripId);
@@ -269,7 +299,7 @@ export async function testRealtime() {
     assert("Unsubscribed client gets no broadcast", false, err.message);
   }
 
-  // ─── 11. /api/realtime/stats endpoint ──────────────────
+  // ─── 12. /api/realtime/stats endpoint ─────────────────-
   try {
     const stats = await request("GET", "/api/realtime/stats");
     assert(
@@ -281,7 +311,7 @@ export async function testRealtime() {
     assert("GET /api/realtime/stats", false, err.message);
   }
 
-  // ─── 12. End-to-end: HTTP GPS POST → WS broadcast ─────
+  // ─── 13. End-to-end: HTTP GPS POST → WS broadcast ─────
   // Create a real trip, POST locations via HTTP, verify WS client receives broadcast
   let locBusId: string | null = null;
   let locStopA: string | null = null;
@@ -346,7 +376,7 @@ export async function testRealtime() {
     assert("E2E: GPS POST → Redis → WS broadcast", false, err.message);
   }
 
-  // ─── 13. Trip end cleanup ──────────────────────────────
+  // ─── 14. Trip end cleanup ──────────────────────────────
   // When a trip is completed, subscribers should receive { type: "trip:ended" }
   // and the Redis trip:<id>:latest key should be deleted.
   try {
