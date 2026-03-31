@@ -1,4 +1,6 @@
 import { busRepository, routeRepository, tripRepository } from "../repository";
+import { roomManager } from "../../realtime/roomManager";
+import { publisher } from "../../src/lib/redis";
 import type { Trip, CreateTripInput, UpdateTripInput } from "../../src/types/mobility.types";
 
 export const tripService = {
@@ -48,7 +50,19 @@ export const tripService = {
       updateData.endedAt = new Date();
     }
 
-    return tripRepository.updateTrip(id, updateData) as Promise<Trip | null>;
+    const updated = await tripRepository.updateTrip(id, updateData) as Trip | null;
+
+    // When a trip ends, clean up realtime resources:
+    // 1. Broadcast "trip:ended" to all WebSocket subscribers and close the room
+    // 2. Delete the cached latest position from Redis
+    if (updated && (updated.status === "completed" || updated.status === "cancelled")) {
+      roomManager.closeRoom(id);
+
+      publisher.del(`trip:${id}:latest`)
+        .catch((err) => console.error("[redis] DEL trip latest failed:", err.message));
+    }
+
+    return updated;
   },
 
   async deleteTrip(id: string) {
