@@ -73,29 +73,6 @@ export const roomManager = {
     return rooms.get(tripId)?.size ?? 0;
   },
 
-  /**
-   * End a trip room: broadcast trip:ended to all watchers,
-   * remove all clients from the room, and delete the room.
-   * Called when a trip is completed or cancelled.
-   */
-  closeRoom(tripId: string) {
-    const room = rooms.get(tripId);
-    if (!room || room.size === 0) {
-      rooms.delete(tripId);
-      return;
-    }
-
-    const message = JSON.stringify({ type: "trip:ended", tripId });
-    for (const ws of room) {
-      if (ws.readyState === ws.OPEN) ws.send(message);
-      // Remove this trip from the client's reverse lookup
-      clientTrips.get(ws)?.delete(tripId);
-    }
-
-    rooms.delete(tripId);
-    console.log(`[ws] closeRoom trip:${tripId.slice(0, 8)}… (room deleted)`);
-  },
-
   getStats(): { tripId: string; watchers: number }[] {
     return Array.from(rooms.entries()).map(([tripId, set]) => ({
       tripId,
