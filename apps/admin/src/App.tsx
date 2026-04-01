@@ -1,5 +1,3 @@
-import React from 'react';
-
 function App() {
   return (
     <div className="min-h-screen bg-neutral-900 border-t-4 border-purple-500 text-white flex flex-col items-center justify-center p-6">

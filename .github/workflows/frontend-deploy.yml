@@ -38,8 +38,8 @@ jobs:
 
       - name: Build Preview (Staging)
         if: github.ref == 'refs/heads/staging'
-        run: cd apps/${{ matrix.app }} && eas build --platform android --profile preview --non-interactive
+        run: cd apps/${{ matrix.app }} && eas build --platform android --profile preview --non-interactive --no-wait
 
       - name: Build Production (Main)
         if: github.ref == 'refs/heads/main'
-        run: cd apps/${{ matrix.app }} && eas build --platform android --profile production --non-interactive
+        run: cd apps/${{ matrix.app }} && eas build --platform android --profile production --non-interactive --no-wait
