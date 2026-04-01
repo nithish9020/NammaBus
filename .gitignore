@@ -63,6 +63,9 @@ build/
 .expo-shared/
 .web-build/
 metro-cache/
+.next/
+*.local
+metro-cache/
 
 # React Native CLI
 android/app/build/
@@ -118,3 +121,5 @@ jest-cache/
 ########################################
 *.pem
 *.key
+
+APPS_BUILD_PLAN.md

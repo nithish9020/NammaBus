@@ -1,0 +1,10 @@
+{
+  "name": "nammabus",
+  "private": true,
+  "workspaces": [
+    "apps/shared",
+    "apps/passenger",
+    "apps/driver",
+    "apps/admin"
+  ]
+}
