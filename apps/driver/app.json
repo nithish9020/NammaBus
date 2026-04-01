@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "NammaBus Driver",
+    "slug": "nammabus-driver",
+    "scheme": "nammabus-driver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.nammabus.driver",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "foregroundService": {
+        "notificationTitle": "NammaBus GPS Active",
+        "notificationBody": "Sending your location for active trip",
+        "notificationColor": "#1a56db"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow NammaBus Driver to use your location for GPS tracking.",
+          "locationAlwaysPermission": "Allow NammaBus Driver to use your location in the background.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
