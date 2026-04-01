@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useAuth, AuthProvider } from './context/AuthContext';
 import { Login } from './components/Login';
 
-function Dashboard({ userEmail, onLogout }: { userEmail: string; onLogout: () => void }) {
+function Dashboard() {
+  const { user, logout } = useAuth();
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Top Nav */}
@@ -21,13 +23,16 @@ function Dashboard({ userEmail, onLogout }: { userEmail: string; onLogout: () =>
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                 <span className="text-blue-600 font-semibold text-xs">
-                  {userEmail.charAt(0).toUpperCase()}
+                  {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'A'}
                 </span>
               </div>
-              <span className="hidden sm:block">{userEmail}</span>
+              <div className="hidden sm:block">
+                <div className="text-sm font-medium text-slate-800">{user?.name || 'Admin'}</div>
+                <div className="text-xs text-slate-400">{user?.email}</div>
+              </div>
             </div>
             <button
-              onClick={onLogout}
+              onClick={logout}
               className="px-4 py-2 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-medium transition"
             >
               Sign out
@@ -105,20 +110,36 @@ function Dashboard({ userEmail, onLogout }: { userEmail: string; onLogout: () =>
   );
 }
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
 
-  const handleLoginSuccess = (email: string) => {
-    setUserEmail(email);
-    setIsLoggedIn(true);
-  };
-
-  if (!isLoggedIn) {
-    return <Login onSuccess={handleLoginSuccess} />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex items-center gap-3">
+          <svg className="animate-spin w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.2" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+          <span className="text-slate-500 font-medium">Loading...</span>
+        </div>
+      </div>
+    );
   }
 
-  return <Dashboard userEmail={userEmail} onLogout={() => setIsLoggedIn(false)} />;
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  return <Dashboard />;
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
 
 export default App;
