@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiFetch } from '../lib/api';
+import { authFetch } from '../lib/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -20,7 +20,8 @@ export function Login({ onSuccess }: LoginProps) {
     setError('');
 
     try {
-      const response = await apiFetch('/auth/login', {
+      // better-auth email sign-in endpoint
+      const response = await authFetch('/api/auth/sign-in/email', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
