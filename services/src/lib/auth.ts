@@ -9,6 +9,12 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   basePath: "/api/auth",
 
+  trustedOrigins: [
+    "http://localhost:5173",        // local Vite dev server
+    "http://localhost:4173",        // local Vite preview
+    process.env.FRONTEND_URL || "", // Vercel prod URL (set in Render env vars)
+  ].filter(Boolean),
+
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
