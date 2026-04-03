@@ -123,3 +123,4 @@ jest-cache/
 *.key
 
 APPS_BUILD_PLAN.md
+admin_frontend_guide.md
