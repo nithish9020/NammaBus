@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { authFetch } from '../lib/api';
+import { authApi } from '@nammabus/shared';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -18,21 +18,14 @@ export function Login() {
     setError('');
 
     try {
-      const response = await authFetch('/api/auth/sign-in/email', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
+      const { data, error: apiError } = await authApi.signIn({ email, password });
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || 'Invalid email or password');
+      if (apiError) {
+        throw new Error(apiError);
       }
 
-      const data = await response.json();
-
-      // better-auth returns { token, user, session }
-      if (data.token && data.user) {
-        login(data.token, data.user);
+      if (data?.user) {
+        login(data.user);
       } else {
         throw new Error('Unexpected response from server');
       }

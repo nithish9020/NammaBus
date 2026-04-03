@@ -1,31 +1,20 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { authApi, type AuthUser } from '@nammabus/shared';
 
 
 // ─── Types ─────────────────────────────────────────────────
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  image?: string | null;
-}
-
 interface AuthState {
-  user: User | null;
-  token: string | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
 
 interface AuthContextType extends AuthState {
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  login: (user: AuthUser) => void;
+  logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
-
-// ─── Storage Keys ──────────────────────────────────────────
-
-const TOKEN_KEY = 'nammabus_token';
-const USER_KEY = 'nammabus_user';
 
 // ─── Context ───────────────────────────────────────────────
 
@@ -42,46 +31,57 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: true,
   });
 
-  // On mount: restore from localStorage (no server round-trip needed)
-  useEffect(() => {
-    const savedToken = localStorage.getItem(TOKEN_KEY);
-    const savedUser = localStorage.getItem(USER_KEY);
-
-    if (savedToken && savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setState({ user, token: savedToken, isAuthenticated: true, isLoading: false });
-      } catch {
-        // Corrupted data — clear and show login
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
-        setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+  const refreshSession = useCallback(async () => {
+    setState(s => ({ ...s, isLoading: true }));
+    try {
+      const { data } = await authApi.getSession();
+      
+      if (data?.user) {
+        setState({
+          user: data.user,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } else {
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       }
-    } else {
-      setState(s => ({ ...s, isLoading: false }));
+    } catch (err) {
+      console.error('Failed to fetch session:', err);
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
     }
   }, []);
 
-  const login = useCallback((token: string, user: User) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    setState({ user, token, isAuthenticated: true, isLoading: false });
+  // On mount: check server session
+  useEffect(() => {
+    refreshSession();
+  }, [refreshSession]);
+
+  const login = useCallback((user: AuthUser) => {
+    setState({ user, isAuthenticated: true, isLoading: false });
   }, []);
 
-  const logout = useCallback(() => {
-
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+  const logout = useCallback(async () => {
+    try {
+      await authApi.signOut();
+    } finally {
+      setState({ user: null, isAuthenticated: false, isLoading: false });
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ ...state, login, logout, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );
