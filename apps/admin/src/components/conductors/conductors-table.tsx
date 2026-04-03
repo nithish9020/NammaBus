@@ -75,8 +75,8 @@ export function ConductorsTable({ conductors, isLoading, onDelete }: ConductorsT
                   <TableCell>{conductor.phone}</TableCell>
                   <TableCell>{conductor.city}</TableCell>
                   <TableCell>
-                    <Badge variant={conductor.verified ? "default" : "secondary"}>
-                      {conductor.verified ? "Verified" : "Pending"}
+                    <Badge variant={conductor.status === "active" ? "default" : "secondary"}>
+                      {conductor.status}
                     </Badge>
                   </TableCell>
                   <TableCell>

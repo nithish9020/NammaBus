@@ -19,21 +19,19 @@ export interface User {
 
 export interface Driver extends SharedDriver {
   user?: User;
-  verified?: boolean;
 }
 
 export interface Conductor extends SharedConductor {
   user?: User;
-  verified?: boolean;
 }
 
 export interface Bus {
   id: string;
   registrationNumber: string;
-  type?: string;
+  type?: "mini" | "regular" | "ac" | "deluxe";
   capacity: number;
   city: string;
-  status: "active" | "maintenance" | "retired";
+  status: "active" | "inactive" | "maintenance";
 }
 
 export interface Stop {
@@ -43,6 +41,8 @@ export interface Stop {
   lon: string;
   city: string;
   pincode: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface RouteStop {

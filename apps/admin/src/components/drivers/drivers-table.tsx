@@ -75,8 +75,8 @@ export function DriversTable({ drivers, isLoading, onDelete }: DriversTableProps
                   <TableCell>{driver.phone}</TableCell>
                   <TableCell>{driver.city}</TableCell>
                   <TableCell>
-                    <Badge variant={driver.verified ? "default" : "secondary"}>
-                      {driver.verified ? "Verified" : "Pending"}
+                    <Badge variant={driver.status === "active" ? "default" : "secondary"}>
+                      {driver.status}
                     </Badge>
                   </TableCell>
                   <TableCell>

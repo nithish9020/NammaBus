@@ -65,6 +65,7 @@ export function StopTable({ stops, isLoading, onDelete }: StopTableProps) {
                 <TableHead>Pincode</TableHead>
                 <TableHead>Latitude</TableHead>
                 <TableHead>Longitude</TableHead>
+                <TableHead>Created At</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -81,6 +82,9 @@ export function StopTable({ stops, isLoading, onDelete }: StopTableProps) {
                   </TableCell>
                   <TableCell className="text-slate-500 font-mono text-xs">
                     {stop.lon}
+                  </TableCell>
+                  <TableCell className="text-slate-500 text-xs">
+                    {stop.createdAt ? new Date(stop.createdAt).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell className="text-right">
                     <button

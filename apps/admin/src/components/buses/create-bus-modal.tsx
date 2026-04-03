@@ -33,7 +33,7 @@ const formSchema = z.object({
   registrationNumber: z.string().min(3, "Registration number is required"),
   capacity: z.coerce.number().int().positive("Capacity must be a positive integer"),
   city: z.string().min(2, "City is required"),
-  type: z.enum(["standard", "ac", "sleeper", "ac_sleeper"]).optional(),
+  type: z.enum(["mini", "regular", "ac", "deluxe"]).optional(),
 });
 
 interface CreateBusModalProps {
@@ -51,7 +51,7 @@ export function CreateBusModal({ open, onOpenChange }: CreateBusModalProps) {
       registrationNumber: "",
       capacity: 50,
       city: "",
-      type: "standard",
+      type: "regular",
     },
   });
 
@@ -122,10 +122,10 @@ export function CreateBusModal({ open, onOpenChange }: CreateBusModalProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="standard">Standard</SelectItem>
+                      <SelectItem value="mini">Mini</SelectItem>
+                      <SelectItem value="regular">Regular</SelectItem>
                       <SelectItem value="ac">AC</SelectItem>
-                      <SelectItem value="sleeper">Sleeper</SelectItem>
-                      <SelectItem value="ac_sleeper">AC Sleeper</SelectItem>
+                      <SelectItem value="deluxe">Deluxe</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
