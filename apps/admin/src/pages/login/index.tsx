@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '@nammabus/shared/api';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if actually already logged in
+  const { data: sessionData, isLoading: sessionLoading } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const res = await authApi.getSession();
+      if (!res.data || res.error) {
+        throw new Error(res.error || "No session");
+      }
+      return res.data;
+    },
+    retry: false
+  });
+
+  useEffect(() => {
+    if (sessionData && sessionData.user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [sessionData, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +58,14 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (sessionLoading || (sessionData && sessionData.user)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">

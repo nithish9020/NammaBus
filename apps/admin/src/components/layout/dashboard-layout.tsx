@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSession, signOut } from "@/lib/api";
+import { authApi } from "@nammabus/shared/api";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 
@@ -20,7 +20,15 @@ export function DashboardLayout() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["session"],
-    queryFn: getSession,
+    queryFn: async () => {
+      const res = await authApi.getSession();
+      // If unauthorized, react-query should know it's an error/null state
+      if (!res.data || res.error) {
+        throw new Error(res.error || "No session");
+      }
+      return res.data;
+    },
+    retry: false, // Do not retry if unauthorized
   });
 
   if (isLoading) {
@@ -42,7 +50,7 @@ export function DashboardLayout() {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await authApi.signOut();
     } catch {
       // ignore
     } finally {
