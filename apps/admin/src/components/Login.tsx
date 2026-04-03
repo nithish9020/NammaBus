@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { authFetch } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { authApi } from '@nammabus/shared';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
-interface LoginProps {
-  onSuccess: (email: string) => void;
-}
-
-export function Login({ onSuccess }: LoginProps) {
+export function Login() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,17 +18,17 @@ export function Login({ onSuccess }: LoginProps) {
     setError('');
 
     try {
-      // better-auth email sign-in endpoint
-      const response = await authFetch('/api/auth/sign-in/email', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
+      const { data, error: apiError } = await authApi.signIn({ email, password });
 
-      if (!response.ok) {
-        throw new Error('Invalid email or password');
+      if (apiError) {
+        throw new Error(apiError);
       }
 
-      onSuccess(email);
+      if (data?.user) {
+        login(data.user);
+      } else {
+        throw new Error('Unexpected response from server');
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to connect to server');
     } finally {
