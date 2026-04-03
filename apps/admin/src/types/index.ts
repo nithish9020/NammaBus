@@ -19,15 +19,18 @@ export interface User {
 
 export interface Driver extends SharedDriver {
   user?: User;
+  verified?: boolean;
 }
 
 export interface Conductor extends SharedConductor {
   user?: User;
+  verified?: boolean;
 }
 
 export interface Bus {
   id: string;
   registrationNumber: string;
+  type?: string;
   capacity: number;
   city: string;
   status: "active" | "maintenance" | "retired";

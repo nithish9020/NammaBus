@@ -46,7 +46,7 @@ export function CreateBusModal({ open, onOpenChange }: CreateBusModalProps) {
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       registrationNumber: "",
       capacity: 50,

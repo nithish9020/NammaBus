@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: session } = useQuery({
+  const { data: session } = useQuery<any>({
     queryKey: ["session"],
   });
 
