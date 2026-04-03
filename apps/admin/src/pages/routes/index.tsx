@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { mobilityApi } from "@nammabus/shared/api";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Plus, Map as MapIcon, List } from "lucide-react";
 import { RouteTableView } from "@/components/routes/route-table-view";
 import { RouteMapView } from "@/components/routes/route-map-view";
 import { CreateRouteModal } from "@/components/routes/create-route-modal";
+import type { Route, Stop } from "@/types";
 
 export type RouteView = "table" | "map";
 
@@ -20,15 +21,42 @@ export default function RoutesPage() {
     localStorage.setItem("admin.routeView", view);
   };
 
-  const { data: routes = [], isLoading } = useQuery({
+  const { data: rawRoutes = [], isLoading: isRoutesLoading } = useQuery({
     queryKey: ["routes"],
     queryFn: async () => {
       const res = await mobilityApi.getAllRoutes();
       if (res.error) throw new Error(res.error);
-      // Ensure we extract the array if returned as an object
       return Array.isArray(res.data) ? res.data : (res.data as any)?.routes || [];
     },
   });
+
+  const { data: rawStops = [], isLoading: isStopsLoading } = useQuery({
+    queryKey: ["stops"],
+    queryFn: async () => {
+      const res = await mobilityApi.getAllStops();
+      if (res.error) throw new Error(res.error);
+      return Array.isArray(res.data) ? res.data : (res.data as any)?.stops || [];
+    },
+  });
+
+  const isLoading = isRoutesLoading || isStopsLoading;
+
+  // Optimistically stitch routes with full stop objects in the frontend
+  const routes = useMemo(() => {
+    if (!rawRoutes.length || !rawStops.length) return rawRoutes as Route[];
+
+    const stopsMap = new Map<string, Stop>();
+    (rawStops as Stop[]).forEach((stop) => stopsMap.set(stop.id, stop));
+
+    return (rawRoutes as Route[]).map((route) => {
+      if (!route.stops) return route;
+      const populatedStops = route.stops.map((rs: any) => ({
+        ...rs,
+        stop: stopsMap.get(rs.stopId),
+      }));
+      return { ...route, stops: populatedStops };
+    });
+  }, [rawRoutes, rawStops]);
 
   return (
     <div className="space-y-6">
