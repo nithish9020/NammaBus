@@ -7,7 +7,7 @@ export async function signIn(credentials: SignInRequest) {
 }
 
 export async function signOut() {
-  return request<void>('POST', AUTH_ENDPOINTS.SIGN_OUT);
+  return request<void>('POST', AUTH_ENDPOINTS.SIGN_OUT, {});
 }
 
 export async function getSession() {

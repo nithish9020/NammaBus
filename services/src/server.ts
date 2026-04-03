@@ -29,9 +29,9 @@ app.use(
 // Express handles HTTP, ws handles WebSocket upgrades at /ws.
 const httpServer = createServer(app);
 
-app.all("/api/auth/*", toNodeHandler(auth));
-
 app.use(express.json());
+
+app.all("/api/auth/*", toNodeHandler(auth));
 
 app.use("/api/identity", identityRoutes);
 app.use("/api/mobility", mobilityRoutes);

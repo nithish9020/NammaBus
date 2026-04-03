@@ -34,6 +34,10 @@ export async function request<T>(
 
   const extraHeaders = clientConfig.getHeaders?.() ?? {};
 
+  if (path.includes("/api/auth")) {
+    console.log(`[api-debug] ${method} ${url}`, { body, credentials: 'include' });
+  }
+
   const res = await fetch(url, {
     method,
     credentials: 'include',           // sends session cookie for web
