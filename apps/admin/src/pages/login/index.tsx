@@ -29,7 +29,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (sessionData && sessionData.user) {
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [sessionData, navigate]);
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
       if (data?.user) {
         // Logged in successfully, invalidate session to force refresh in layout
         await queryClient.invalidateQueries({ queryKey: ["session"] });
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       } else {
         throw new Error('Unexpected response from server');
       }

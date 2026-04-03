@@ -10,7 +10,7 @@ export function Sidebar({ userName, onSignOut }: SidebarProps) {
   const location = useLocation();
 
   const navItems = [
-    { name: "Dashboard", path: "/dashboard" },
+    { name: "Dashboard", path: "/" },
     { name: "Routes", path: "/routes" },
     { name: "Stops", path: "/stops" },
     { name: "Drivers & Conductors", path: "/drivers" },
@@ -26,7 +26,7 @@ export function Sidebar({ userName, onSignOut }: SidebarProps) {
 
       <nav className="flex-1 py-6 overflow-y-auto space-y-1">
         {navItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.path);
+          const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
           return (
             <Link
               key={item.path}
