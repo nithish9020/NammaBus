@@ -1,24 +1,61 @@
-import type { 
-  AuthUser,
-  Driver, Conductor, 
-  Stop, Route, RouteStop, RouteWithStops, 
-  Bus, Trip, TripLocation,
-  StaffStatus, RouteStatus, BusType, BusStatus, TripStatus 
+import type {
+  Trip as SharedTrip,
+  Driver as SharedDriver,
+  Conductor as SharedConductor,
+  TripStatus,
+  Route as SharedRoute,
 } from "@nammabus/shared/types";
 
-export type { 
-  AuthUser,
-  Driver, Conductor, 
-  Stop, Route, RouteStop, RouteWithStops, 
-  Bus, Trip, TripLocation,
-  StaffStatus, RouteStatus, BusType, BusStatus, TripStatus 
-};
-
-// Aliases as per guide
-export type User = AuthUser;
-export type DriverStatus = StaffStatus;
+export type { TripStatus };
 
 export type DashboardView = "map" | "tile" | "table";
-export type RouteView = "map" | "table";
-export type StopView = "map" | "table";
-export type StaffView = "drivers" | "conductors";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+}
+
+export interface Driver extends SharedDriver {
+  user?: User;
+}
+
+export interface Conductor extends SharedConductor {
+  user?: User;
+}
+
+export interface Bus {
+  id: string;
+  registrationNumber: string;
+  capacity: number;
+  city: string;
+  status: "active" | "maintenance" | "retired";
+}
+
+export interface Stop {
+  id: string;
+  name: string;
+  lat: string;
+  lon: string;
+  city: string;
+  pincode: string;
+}
+
+export interface RouteStop {
+  stopId: string;
+  sequence: number;
+  stop?: Stop;
+}
+
+export interface Route extends SharedRoute {
+  stops?: RouteStop[];
+  color?: string;
+}
+
+export interface Trip extends SharedTrip {
+  bus?: Bus;
+  route?: Route;
+  driver?: Driver;
+  conductor?: Conductor;
+}
