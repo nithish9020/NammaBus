@@ -25,6 +25,9 @@ export const auth = betterAuth({
     database: {
       generateId: () => crypto.randomUUID(),
     },
+    csrfCheck: {
+      enabled: false,
+    },
   },
 
   emailAndPassword: {
