@@ -43,3 +43,20 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     credentials: 'include',
   });
 }
+
+// ─── Admin API Additions ───────────────────────────────────
+export async function getSession() {
+  const res = await authFetch('/get-session');
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) return null;
+    throw new Error('Failed to get session');
+  }
+  return res.json();
+}
+
+export async function signOut() {
+  const res = await authFetch('/sign-out', { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to sign out');
+  localStorage.removeItem('nammabus_token');
+  return res.json();
+}
