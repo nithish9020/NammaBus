@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { mobilityApi } from "@nammabus/shared/api";
-import { StatsBar } from "@/components/dashboard/stats-bar";
 import { ViewToggle } from "@/components/dashboard/view-toggle";
 import type { DashboardView } from "@/components/dashboard/view-toggle";
 import { TripTileView } from "@/components/dashboard/trip-tile-view";
 import { TripTableView } from "@/components/dashboard/trip-table-view";
 import { TripMapView } from "@/components/dashboard/trip-map-view";
 import { CreateTripModal } from "@/components/dashboard/create-trip-modal";
-import { useRealtimeStats } from "@/hooks/use-realtime-stats";
 import type { Trip } from "@/types";
 
 export default function DashboardPage() {
@@ -18,8 +16,6 @@ export default function DashboardPage() {
   });
   
   const [createModalOpen, setCreateModalOpen] = useState(false);
-
-  const { stats, isLoading: isStatsLoading } = useRealtimeStats();
 
   const { data: tripsRes, isLoading: isTripsLoading } = useQuery({
     queryKey: ["trips"],
@@ -44,8 +40,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
-      <StatsBar stats={stats} isLoading={isStatsLoading} />
-
       <div className="flex items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
         <ViewToggle activeView={activeView} onViewChange={handleViewChange} />
         <div>
