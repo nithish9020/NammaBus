@@ -3,16 +3,17 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins";
 import { db } from "../db";
 import * as schema from "../db/schema";
+import { env } from "./env";
 
 export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BETTER_AUTH_URL,
   basePath: "/api/auth",
 
   trustedOrigins: [
     "http://localhost:5173",        // local Vite dev server
     "http://localhost:4173",        // local Vite preview
-    process.env.FRONTEND_URL || "", // Vercel prod URL (set in Render env vars)
+    env.FRONTEND_URL || "", // Vercel prod URL (set in Render env vars)
   ].filter(Boolean),
 
   database: drizzleAdapter(db, {

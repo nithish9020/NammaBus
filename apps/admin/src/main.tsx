@@ -7,7 +7,7 @@ import './index.css';
 
 // Initialize the shared API client with the backend URL from environment variables.
 init({
-  baseUrl: import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:3000',
+  baseUrl: import.meta.env.VITE_PUBLIC_API_URL ?? '',
 });
 
 createRoot(document.getElementById('root')!).render(
