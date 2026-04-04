@@ -1,16 +1,37 @@
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { authApi } from '@nammabus/shared';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authApi } from '@nammabus/shared/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
-export function Login() {
-  const { login } = useAuth();
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if actually already logged in
+  const { data: sessionData, isLoading: sessionLoading } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const res = await authApi.getSession();
+      if (!res.data || res.error) {
+        throw new Error(res.error || "No session");
+      }
+      return res.data;
+    },
+    retry: false
+  });
+
+  useEffect(() => {
+    if (sessionData && sessionData.user) {
+      navigate('/', { replace: true });
+    }
+  }, [sessionData, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +46,9 @@ export function Login() {
       }
 
       if (data?.user) {
-        login(data.user);
+        // Logged in successfully, invalidate session to force refresh in layout
+        await queryClient.invalidateQueries({ queryKey: ["session"] });
+        navigate('/', { replace: true });
       } else {
         throw new Error('Unexpected response from server');
       }
@@ -35,6 +58,14 @@ export function Login() {
       setIsLoading(false);
     }
   };
+
+  if (sessionLoading || (sessionData && sessionData.user)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -91,7 +122,7 @@ export function Login() {
       </div>
 
       {/* Right Panel — Login Form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16 relative z-10 bg-white">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-2 mb-10">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
@@ -123,8 +154,8 @@ export function Login() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 font-medium">
+            <div className="space-y-2 text-left">
+              <Label htmlFor="email" className="text-slate-700 font-medium block">
                 Email address
               </Label>
               <Input
@@ -138,8 +169,8 @@ export function Login() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700 font-medium">
+            <div className="space-y-2 text-left">
+              <Label htmlFor="password" className="text-slate-700 font-medium block">
                 Password
               </Label>
               <Input

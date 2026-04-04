@@ -10,6 +10,7 @@ export const routeRepository = {
     origin: string;
     destination: string;
     city: string;
+    color?: string;
     stops: { stopId: string; sequence: number }[];
   }) {
     const [newRoute] = await db
@@ -20,6 +21,7 @@ export const routeRepository = {
         origin: data.origin,
         destination: data.destination,
         city: data.city,
+        color: data.color,
         totalStops: data.stops.length,
       })
       .returning();
@@ -37,9 +39,30 @@ export const routeRepository = {
     return this.findRouteById(newRoute.id);
   },
 
-  /** List all routes (metadata only, no stops) */
+  /** List all routes with stops */
   async findAllRoutes() {
-    return db.select().from(route).orderBy(asc(route.routeNumber));
+    const routes = await db.select().from(route).orderBy(asc(route.routeNumber));
+    if (routes.length === 0) return [];
+
+    const stopsRes = await db
+      .select({
+        routeId: routeStop.routeId,
+        stopId: routeStop.stopId,
+        sequence: routeStop.sequence,
+      })
+      .from(routeStop)
+      .orderBy(asc(routeStop.sequence));
+
+    const stopsByRoute = stopsRes.reduce((acc, curr) => {
+      if (!acc[curr.routeId]) acc[curr.routeId] = [];
+      acc[curr.routeId].push(curr);
+      return acc;
+    }, {} as Record<string, typeof stopsRes>);
+
+    return routes.map((r) => ({
+      ...r,
+      stops: stopsByRoute[r.id] || [],
+    }));
   },
 
   /** Get one route with all stops populated and ordered by sequence */

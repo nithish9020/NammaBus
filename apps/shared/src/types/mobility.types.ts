@@ -55,6 +55,7 @@ export interface CreateRouteInput {
   origin: string;
   destination: string;
   city: string;
+  color?: string;
   stops: { stopId: string; sequence: number }[];
 }
 
