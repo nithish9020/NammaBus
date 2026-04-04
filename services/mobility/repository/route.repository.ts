@@ -10,6 +10,7 @@ export const routeRepository = {
     origin: string;
     destination: string;
     city: string;
+    color?: string;
     stops: { stopId: string; sequence: number }[];
   }) {
     const [newRoute] = await db
@@ -20,6 +21,7 @@ export const routeRepository = {
         origin: data.origin,
         destination: data.destination,
         city: data.city,
+        color: data.color,
         totalStops: data.stops.length,
       })
       .returning();

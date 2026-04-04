@@ -20,6 +20,7 @@ export interface Route {
   origin: string;
   destination: string;
   city: string;
+  color?: string | null;
   status: RouteStatus;
   totalStops: number;
   createdAt: Date;
@@ -46,6 +47,7 @@ export interface CreateRouteInput {
   origin: string;
   destination: string;
   city: string;
+  color?: string;
   stops: { stopId: string; sequence: number }[];
 }
 
