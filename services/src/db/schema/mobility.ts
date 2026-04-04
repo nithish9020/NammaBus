@@ -38,6 +38,7 @@ export const route = pgTable("route", {
   origin: text("origin").notNull(), // first stop name
   destination: text("destination").notNull(), // last stop name
   city: text("city").notNull(),
+  color: text("color"), // hex color code for the route
   status: routeStatusEnum("status").notNull().default("active"),
   totalStops: integer("total_stops").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
