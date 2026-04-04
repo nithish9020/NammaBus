@@ -35,7 +35,11 @@ async function main() {
         await sql(Object.assign([stmt], { raw: [stmt] }) as any);
       } catch (err: any) {
         // Skip "already exists" errors so migrations are re-runnable
-        if (err?.code === "42P07" || err?.code === "42710") {
+        if (
+          err?.code === "42P07" || 
+          err?.code === "42710" || 
+          err?.code === "42701" // "duplicate column" code
+        ) {
           console.log(`   ⏭️  Skipped (already exists)`);
         } else {
           throw err;
