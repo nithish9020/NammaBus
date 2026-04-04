@@ -57,6 +57,7 @@ export interface UpdateRouteInput {
   origin?: string;
   destination?: string;
   city?: string;
+  color?: string;
   status?: RouteStatus;
 }
 
