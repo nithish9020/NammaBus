@@ -8,7 +8,7 @@ import type {
 
 export const routeService = {
   async createRoute(payload: CreateRouteInput): Promise<RouteWithStops> {
-    const { routeNumber, name, origin, destination, city, stops } = payload;
+    const { routeNumber, name, origin, destination, city, color, stops } = payload;
 
     if (!routeNumber || !name || !origin || !destination || !city) {
       throw new Error("Missing required fields: routeNumber, name, origin, destination, city");
