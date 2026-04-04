@@ -105,6 +105,7 @@ export const routeRepository = {
       origin: string;
       destination: string;
       city: string;
+      color: string;
       status: "active" | "inactive" | "suspended";
     }>
   ) {
