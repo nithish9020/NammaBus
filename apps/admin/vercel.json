@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "https://nammabus-7oza.onrender.com/api/:match*"
+    }
+  ]
+}

@@ -26,6 +26,14 @@ export const auth = betterAuth({
     database: {
       generateId: () => crypto.randomUUID(),
     },
+    cookiePrefix: "nammabus",
+    crossSubDomainCookies: {
+      enabled: true
+    },
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+    },
     csrfCheck: {
       enabled: false,
     },
